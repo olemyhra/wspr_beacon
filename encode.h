@@ -4,13 +4,15 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
 
 #define MAX_CALLSIGN_LENGTH 6
 #define MAX_LOCATOR_LENGTH 4
 
 struct data {
-	char8_t callsign[MAX_CALLSIGN_LENGTH];
-	char8_t locator[MAX_LOCATOR_LENGTH];
+	char callsign[MAX_CALLSIGN_LENGTH];
+	char locator[MAX_LOCATOR_LENGTH];
 	uint8_t power;
 	uint32_t n;
 	uint32_t m;
@@ -22,6 +24,6 @@ struct data {
 };
 
 
-struct data * encode(char *callsign, char *locator, uint8_t power);
+struct data * encode(char *in_callsign, char *in_locator, uint8_t in_power);
 
 #endif

@@ -1,9 +1,13 @@
+CC = gcc
+CFLAGS1 = -Wall -Werror -O2 -g3 -std=c17 -pedantic
+DEPS =  encode.h
 
-wspr_beacon: wspr_beacon.c encode.o
-	gcc wspr_beacon.c -o wspr_beacon
+%.o: %.c $(DEPS)
+	$(CC) -c -o $@ $< $(CFLAGS)
 
-encode.o: encode.c
-	gcc -c encode.c -o encode.o
+wspr_beacon: wspr_beacon.o encode.o
+	$(CC) $(CFLAGS1) wspr_beacon.o encode.o -o $@
+
 
 clean:
-	rm *.o wspr_beacon
+	rm -f  wspr_beacon wspr_beacon.o encode.o
