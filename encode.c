@@ -6,6 +6,13 @@ struct data * encode(char *in_callsign, char *in_locator, uint8_t in_power) {
 	int callsign_offset = 0;
 	int callsign_final_length = 0;
 	int callsign_ch[6] = {0};
+
+	uint32_t reg0 = 0;
+	uint32_t reg1 = 0;
+	uint8_t next_bit = 0;
+	uint8_t single_parity_bit = 0;
+	uint32_t and_result = 0;
+	uint8_t bit_length = 0;	
 	
 	/* Valid callsign characters */
 	const char callsign_characters[] = 
@@ -102,5 +109,50 @@ struct data * encode(char *in_callsign, char *in_locator, uint8_t in_power) {
 		printf("%X ", wspr_msg.bitpacked[i]);
 	printf("\n");
 
+
+	
+
+	/* Extract MSB from the bitpacked data stream to be used in convolutional encoding */
+	for (int i=0; i<WSPR_UNCODED_MSG_LENGTH;i++) {
+		for (int x=0;x<BITS_IN_BYTE;x++) {
+			next_bit = ((wspr_msg.bitpacked[i] << x) & 0x80) == 0x80 ? 1 : 0;
+			reg0 = reg0 << 1;
+			reg1 = reg1 << 1;
+			reg0 |= next_bit;
+			reg1 |= next_bit;
+			
+			and_result = 0;
+			and_result = reg0 & 0xF2D05351;
+			single_parity_bit = 0;
+			
+			for (int bit=0; bit<BITS_IN_DWORD;bit++) {
+				single_parity_bit = (uint8_t) single_parity_bit ^ (and_result & 0x01);
+				and_result = and_result >> 1;
+			}
+			wspr_msg.convolution_encoded[bit_length] = single_parity_bit;
+			bit_length++;
+			
+			printf("Reg0 - parity byte: 0x%X\n", single_parity_bit);			
+
+			and_result = 0;
+			and_result = reg1 & 0xE4613C47;
+			single_parity_bit = 0;
+
+			for (int bit=0;bit<BITS_IN_DWORD;bit++) {
+				single_parity_bit = (uint8_t) single_parity_bit ^ (and_result & 0x01);
+				and_result = and_result >> 1;
+			}
+			wspr_msg.convolution_encoded[bit_length] = single_parity_bit;
+			bit_length++;
+	
+			printf("Reg1 - parity byte: 0x%X\n", single_parity_bit);			
+			printf("Bit index: %d\n", bit_length);
+
+			if (bit_length >= WSPR_BIT_LENGTH)
+				break;
+
+ 		}
+	}
+	
 	return NULL;
 }

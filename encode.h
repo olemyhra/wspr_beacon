@@ -9,6 +9,10 @@
 
 #define MAX_CALLSIGN_LENGTH 6
 #define MAX_LOCATOR_LENGTH 4
+#define WSPR_BIT_LENGTH 162
+#define WSPR_UNCODED_MSG_LENGTH 11
+#define BITS_IN_BYTE 8
+#define BITS_IN_DWORD 32
 
 struct data {
 	char callsign[MAX_CALLSIGN_LENGTH];
@@ -16,10 +20,10 @@ struct data {
 	uint8_t power;
 	uint32_t n;
 	uint32_t m;
-	uint8_t bitpacked[11];
-	uint8_t convolution_encoded[21];
-	uint8_t interleaving[21];
-	uint8_t merged_vector[21];
+	uint8_t bitpacked[WSPR_UNCODED_MSG_LENGTH];
+	uint8_t convolution_encoded[WSPR_BIT_LENGTH];
+	uint8_t interleaving[20];
+	uint8_t merged_vector[20];
 
 };
 
