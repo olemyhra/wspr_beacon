@@ -12,8 +12,12 @@ struct data * encode(char *in_callsign, char *in_locator, uint8_t in_power) {
 	uint8_t next_bit = 0;
 	uint8_t single_parity_bit = 0;
 	uint32_t and_result = 0;
-	uint8_t bit_length = 0;	
-	
+	uint8_t bit_length = 0;
+
+	uint8_t P = 0;
+	uint8_t J = 0;	
+	uint8_t I = 0;
+
 	/* Valid callsign characters */
 	const char callsign_characters[] = 
 		"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ ";
@@ -132,8 +136,6 @@ struct data * encode(char *in_callsign, char *in_locator, uint8_t in_power) {
 			wspr_msg.convolution_encoded[bit_length] = single_parity_bit;
 			bit_length++;
 			
-			printf("Reg0 - parity byte: 0x%X\n", single_parity_bit);			
-
 			and_result = 0;
 			and_result = reg1 & 0xE4613C47;
 			single_parity_bit = 0;
@@ -144,15 +146,33 @@ struct data * encode(char *in_callsign, char *in_locator, uint8_t in_power) {
 			}
 			wspr_msg.convolution_encoded[bit_length] = single_parity_bit;
 			bit_length++;
-	
-			printf("Reg1 - parity byte: 0x%X\n", single_parity_bit);			
-			printf("Bit index: %d\n", bit_length);
 
 			if (bit_length >= WSPR_BIT_LENGTH)
 				break;
 
  		}
 	}
+
+	/* Interleaving process */
+	for (int i=0; i<MAX_BYTE_NUMERIC_VALUE;i++) {
+		
+		I = i;
+		J = 0;
+		for (int bit=0; bit<BITS_IN_BYTE; bit++) {
+			if ((I & 0x01) > 0)
+				J = J | (1 << (7 - bit));
+			I >>= 1;	
+		}
+			
+		if (J <= WSPR_BIT_LENGTH) {
+			wspr_msg.interleaving[J] = wspr_msg.convolution_encoded[P];
+			P++;
+		} 
+
+		if (P >= WSPR_BIT_LENGTH) 
+			break;
+	}
+
 	
 	return NULL;
 }

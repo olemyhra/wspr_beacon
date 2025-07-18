@@ -13,6 +13,7 @@
 #define WSPR_UNCODED_MSG_LENGTH 11
 #define BITS_IN_BYTE 8
 #define BITS_IN_DWORD 32
+#define MAX_BYTE_NUMERIC_VALUE 255
 
 struct data {
 	char callsign[MAX_CALLSIGN_LENGTH];
@@ -22,8 +23,8 @@ struct data {
 	uint32_t m;
 	uint8_t bitpacked[WSPR_UNCODED_MSG_LENGTH];
 	uint8_t convolution_encoded[WSPR_BIT_LENGTH];
-	uint8_t interleaving[20];
-	uint8_t merged_vector[20];
+	uint8_t interleaving[WSPR_BIT_LENGTH];
+	uint8_t merged_vector[WSPR_BIT_LENGTH];
 
 };
 
