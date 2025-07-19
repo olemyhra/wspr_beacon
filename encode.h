@@ -30,5 +30,6 @@ struct data {
 
 
 struct data * encode(char *in_callsign, char *in_locator, uint8_t in_power);
+void print(struct data *msg);
 
 #endif

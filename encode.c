@@ -1,5 +1,7 @@
 #include "encode.h"
 
+static void print_array(uint8_t *array, int length);
+
 struct data * encode(char *in_callsign, char *in_locator, uint8_t in_power) {
 	struct data wspr_msg = {0};
 
@@ -17,6 +19,15 @@ struct data * encode(char *in_callsign, char *in_locator, uint8_t in_power) {
 	uint8_t P = 0;
 	uint8_t J = 0;	
 	uint8_t I = 0;
+
+	const uint8_t sync_vector[] = {1,1,0,0,0,0,0,0,1,0,0,0,1,1,1,0,0,0,1,0,0,
+				1,0,1,1,1,1,0,0,0,0,0,0,0,1,0,0,1,0,1,0,0,0,
+				0,0,0,1,0,1,1,0,0,1,1,0,1,0,0,0,1,1,0,1,0,0,
+				0,0,1,1,0,1,0,1,0,1,0,1,0,0,1,0,0,1,0,1,1,0,
+				0,0,1,1,0,1,0,1,0,0,0,1,0,0,0,0,0,1,0,0,1,0,
+				0,1,1,1,0,1,1,0,0,1,1,0,1,0,0,0,1,1,1,0,0,0,
+				0,0,1,0,1,0,0,1,1,0,0,0,0,0,0,0,1,1,0,1,0,1,
+				1,0,0,0,1,1,0,0,0};
 
 	/* Valid callsign characters */
 	const char callsign_characters[] = 
@@ -109,13 +120,6 @@ struct data * encode(char *in_callsign, char *in_locator, uint8_t in_power) {
 	wspr_msg.bitpacked[6] = (wspr_msg.m & 0xF);
 	wspr_msg.bitpacked[6] = wspr_msg.bitpacked[6] << 4;
 
-	for (int i=0;i<11;i++)
-		printf("%X ", wspr_msg.bitpacked[i]);
-	printf("\n");
-
-
-	
-
 	/* Extract MSB from the bitpacked data stream to be used in convolutional encoding */
 	for (int i=0; i<WSPR_UNCODED_MSG_LENGTH;i++) {
 		for (int x=0;x<BITS_IN_BYTE;x++) {
@@ -173,6 +177,64 @@ struct data * encode(char *in_callsign, char *in_locator, uint8_t in_power) {
 			break;
 	}
 
+	/* Merge with sync vector */
+	for (int i=0;i<WSPR_BIT_LENGTH;i++) {
+		wspr_msg.merged_vector[i] = sync_vector[i] + 2 * wspr_msg.convolution_encoded[i];
+	}	
 	
+	print(&wspr_msg);
+			
 	return NULL;
+}
+
+
+
+void print(struct data *msg) {
+	
+	printf("Callsign: ");
+	for (int i=0;i<MAX_CALLSIGN_LENGTH;i++) {
+		printf("%c", msg->callsign[i]);
+	}
+	printf("\n");
+
+	printf("Locator: ");
+	for (int i=0;i<MAX_LOCATOR_LENGTH;i++) {
+		printf("%c", msg->locator[i]);
+	}
+	printf("\n");
+
+	printf("Power: %d\n\n", msg->power);
+	
+	printf("Bitpacked data: ");
+	for (int i=0;i<WSPR_UNCODED_MSG_LENGTH;i++) {
+		printf("0x%X ", msg->bitpacked[i]);
+	}
+	printf("\n\n");
+
+	printf("Convolution encoded data: \n");	
+	print_array(msg->convolution_encoded, WSPR_BIT_LENGTH);	
+	
+	printf("\n\n");
+	printf("Interleaved data: \n");	
+	print_array(msg->interleaving, WSPR_BIT_LENGTH);
+
+	printf("\n\n");
+	printf("Vector merged data: \n");	
+	print_array(msg->merged_vector, WSPR_BIT_LENGTH);	
+}
+
+
+
+static void print_array(uint8_t *array, int length) {
+	int line_items = 0;
+	for (int i=0;i<length;i++) {
+		if (line_items == 10) {
+			printf("\n");
+			line_items = 0;
+		}
+
+		printf("0x%X ", array[i]);
+		line_items++;
+	}
+	printf("\n");
 }
