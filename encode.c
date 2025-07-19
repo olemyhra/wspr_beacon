@@ -3,7 +3,7 @@
 static void print_array(uint8_t *array, int length);
 
 struct data * encode(char *in_callsign, char *in_locator, uint8_t in_power) {
-	struct data wspr_msg = {0};
+	struct data *wspr_msg = (struct data *) calloc(1, sizeof(struct data));
 
 	int callsign_offset = 0;
 	int callsign_final_length = 0;
@@ -20,14 +20,16 @@ struct data * encode(char *in_callsign, char *in_locator, uint8_t in_power) {
 	uint8_t J = 0;	
 	uint8_t I = 0;
 
-	const uint8_t sync_vector[] = {1,1,0,0,0,0,0,0,1,0,0,0,1,1,1,0,0,0,1,0,0,
-				1,0,1,1,1,1,0,0,0,0,0,0,0,1,0,0,1,0,1,0,0,0,
-				0,0,0,1,0,1,1,0,0,1,1,0,1,0,0,0,1,1,0,1,0,0,
-				0,0,1,1,0,1,0,1,0,1,0,1,0,0,1,0,0,1,0,1,1,0,
-				0,0,1,1,0,1,0,1,0,0,0,1,0,0,0,0,0,1,0,0,1,0,
-				0,1,1,1,0,1,1,0,0,1,1,0,1,0,0,0,1,1,1,0,0,0,
-				0,0,1,0,1,0,0,1,1,0,0,0,0,0,0,0,1,1,0,1,0,1,
-				1,0,0,0,1,1,0,0,0};
+	const uint8_t sync_vector[] = {
+					1, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0, 1, 0, 0,
+	              			1, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 1, 0, 1, 0, 0,
+	              			0, 0, 0, 0, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1, 1, 0, 1,
+	             			0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 0,
+	              			1, 1, 0, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1,
+	              			0, 0, 1, 0, 0, 1, 1, 1, 0, 1, 1, 0, 0, 1, 1, 0, 1, 0, 0, 0, 1,
+	              			1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0,
+	          			1, 1, 0, 1, 0, 1, 1, 0, 0, 0, 1, 1, 0, 0, 0					
+					};
 
 	/* Valid callsign characters */
 	const char callsign_characters[] = 
@@ -42,7 +44,7 @@ struct data * encode(char *in_callsign, char *in_locator, uint8_t in_power) {
 	/* Third character in the call sign must be a number 
 	   if not then add a space at the beginning          */
 	if (!isdigit(in_callsign[2])) {
-		wspr_msg.callsign[0] = ' ';
+		wspr_msg->callsign[0] = ' ';
 		callsign_offset++;
 	}
 	
@@ -56,42 +58,42 @@ struct data * encode(char *in_callsign, char *in_locator, uint8_t in_power) {
 	callsign_final_length = MAX_CALLSIGN_LENGTH - callsign_offset;
 
 	/* Copy the in callsign to the wspr message callsign */
-	memcpy(&(wspr_msg).callsign[callsign_offset], in_callsign, callsign_final_length);
+	memcpy(&(wspr_msg->callsign)[callsign_offset], in_callsign, callsign_final_length);
 
 	/* If the callsign in less than max allowed then add padding spaces */
-	for (int i=strlen(wspr_msg.callsign); i<MAX_CALLSIGN_LENGTH;i++)
-		wspr_msg.callsign[i] = ' ';
+	for (int i=strlen(wspr_msg->callsign); i<MAX_CALLSIGN_LENGTH;i++)
+		wspr_msg->callsign[i] = ' ';
 	
 	/*Find the number encoding for the characters in the callsign */
 	for (int i=0;i<MAX_CALLSIGN_LENGTH;i++) {
 		for (int p=0;p<strlen(callsign_characters); p++) {
-			if (wspr_msg.callsign[i] == callsign_characters[p]) {
+			if (wspr_msg->callsign[i] == callsign_characters[p]) {
 				callsign_ch[i] = p;
 				break;
 			} 
 		}
 	} 
 	
-	wspr_msg.n  = callsign_ch[0]; //N1
-	wspr_msg.n = wspr_msg.n * 36 + callsign_ch[1]; //N2
-	wspr_msg.n = wspr_msg.n * 10 + callsign_ch[2]; //N3
-	wspr_msg.n = wspr_msg.n * 27 + callsign_ch[3] - 10; //N4
-	wspr_msg.n = wspr_msg.n * 27 + callsign_ch[4] - 10; //N5
-	wspr_msg.n = wspr_msg.n * 27 + callsign_ch[5] - 10; //N6
+	wspr_msg->n  = callsign_ch[0]; //N1
+	wspr_msg->n = wspr_msg->n * 36 + callsign_ch[1]; //N2
+	wspr_msg->n = wspr_msg->n * 10 + callsign_ch[2]; //N3
+	wspr_msg->n = wspr_msg->n * 27 + callsign_ch[3] - 10; //N4
+	wspr_msg->n = wspr_msg->n * 27 + callsign_ch[4] - 10; //N5
+	wspr_msg->n = wspr_msg->n * 27 + callsign_ch[5] - 10; //N6
 	
-	memcpy(&(wspr_msg).locator, in_locator, MAX_LOCATOR_LENGTH);
+	memcpy(&(wspr_msg->locator), in_locator, MAX_LOCATOR_LENGTH);
 
 
 	/*Find the number encoding for the characters in the locator */
 	for (int i=0;i<MAX_LOCATOR_LENGTH;i++) {
 		for (int p=0;p<strlen(locator_characters); p++) {
-			if (wspr_msg.locator[i] == locator_characters[p]) {
+			if (wspr_msg->locator[i] == locator_characters[p]) {
 				locator_ch[i] = p;
 				break;
 			}
 		}
 		for (int p=0;p<strlen(locator_numbers); p++) {
-			if (wspr_msg.locator[i] == locator_numbers[p]) {
+			if (wspr_msg->locator[i] == locator_numbers[p]) {
 				locator_ch[i] = p;
 				break;
 			}
@@ -100,36 +102,36 @@ struct data * encode(char *in_callsign, char *in_locator, uint8_t in_power) {
 	}
 	
 	/* Add locator to m */
-	wspr_msg.m = (179 - 10 * locator_ch[0] - locator_ch[2]) * 180 + 10 * locator_ch[1] + locator_ch[3];
+	wspr_msg->m = (179 - 10 * locator_ch[0] - locator_ch[2]) * 180 + 10 * locator_ch[1] + locator_ch[3];
 	
 	/* Add power to m */
-	wspr_msg.power = in_power;
-	wspr_msg.m = wspr_msg.m * 128 + wspr_msg.power + 64;
+	wspr_msg->power = in_power;
+	wspr_msg->m = wspr_msg->m * 128 + wspr_msg->power + 64;
 
 	/* Bitpacking */
-	wspr_msg.n = wspr_msg.n << 4;
-	wspr_msg.bitpacked[0] = (wspr_msg.n & 0xFF000000) >> 24;
-	wspr_msg.bitpacked[1] = (wspr_msg.n & 0xFF0000) >> 16;
-	wspr_msg.bitpacked[2] = (wspr_msg.n & 0xFF00) >> 8;
-	wspr_msg.bitpacked[3] = (wspr_msg.n & 0xFF);
+	wspr_msg->n = wspr_msg->n << 4;
+	wspr_msg->bitpacked[0] = (wspr_msg->n & 0xFF000000) >> 24;
+	wspr_msg->bitpacked[1] = (wspr_msg->n & 0xFF0000) >> 16;
+	wspr_msg->bitpacked[2] = (wspr_msg->n & 0xFF00) >> 8;
+	wspr_msg->bitpacked[3] = (wspr_msg->n & 0xFF);
 	
-	wspr_msg.m = wspr_msg.m << 2;
-	wspr_msg.bitpacked[3] = wspr_msg.bitpacked[3] + ((wspr_msg.m & 0xF00000) >> 20);
-	wspr_msg.bitpacked[4] = (wspr_msg.m & 0xFF000) >> 12;
-	wspr_msg.bitpacked[5] = (wspr_msg.m & 0xFF0) >> 4;
-	wspr_msg.bitpacked[6] = (wspr_msg.m & 0xF);
-	wspr_msg.bitpacked[6] = wspr_msg.bitpacked[6] << 4;
+	wspr_msg->m = wspr_msg->m << 2;
+	wspr_msg->bitpacked[3] = wspr_msg->bitpacked[3] + ((wspr_msg->m & 0xF00000) >> 20);
+	wspr_msg->bitpacked[4] = (wspr_msg->m & 0xFF000) >> 12;
+	wspr_msg->bitpacked[5] = (wspr_msg->m & 0xFF0) >> 4;
+	wspr_msg->bitpacked[6] = (wspr_msg->m & 0xF);
+	wspr_msg->bitpacked[6] = wspr_msg->bitpacked[6] << 4;
 
 	/* Extract MSB from the bitpacked data stream to be used in convolutional encoding */
 	for (int i=0; i<WSPR_UNCODED_MSG_LENGTH;i++) {
 		for (int x=0;x<BITS_IN_BYTE;x++) {
-			next_bit = ((wspr_msg.bitpacked[i] << x) & 0x80) == 0x80 ? 1 : 0;
+			next_bit = (((wspr_msg->bitpacked[i] << x) & 0x80) == 0x80) ? 1 : 0;
 			reg0 = reg0 << 1;
 			reg1 = reg1 << 1;
 			reg0 |= next_bit;
 			reg1 |= next_bit;
 			
-			and_result = 0;
+	//		and_result = 0;
 			and_result = reg0 & 0xF2D05351;
 			single_parity_bit = 0;
 			
@@ -137,7 +139,7 @@ struct data * encode(char *in_callsign, char *in_locator, uint8_t in_power) {
 				single_parity_bit = (uint8_t) single_parity_bit ^ (and_result & 0x01);
 				and_result = and_result >> 1;
 			}
-			wspr_msg.convolution_encoded[bit_length] = single_parity_bit;
+			wspr_msg->convolution_encoded[bit_length] = single_parity_bit;
 			bit_length++;
 			
 			and_result = 0;
@@ -148,7 +150,7 @@ struct data * encode(char *in_callsign, char *in_locator, uint8_t in_power) {
 				single_parity_bit = (uint8_t) single_parity_bit ^ (and_result & 0x01);
 				and_result = and_result >> 1;
 			}
-			wspr_msg.convolution_encoded[bit_length] = single_parity_bit;
+			wspr_msg->convolution_encoded[bit_length] = single_parity_bit;
 			bit_length++;
 
 			if (bit_length >= WSPR_BIT_LENGTH)
@@ -168,8 +170,8 @@ struct data * encode(char *in_callsign, char *in_locator, uint8_t in_power) {
 			I >>= 1;	
 		}
 			
-		if (J <= WSPR_BIT_LENGTH) {
-			wspr_msg.interleaving[J] = wspr_msg.convolution_encoded[P];
+		if (J < WSPR_BIT_LENGTH) {
+			wspr_msg->interleaving[J] = wspr_msg->convolution_encoded[P];
 			P++;
 		} 
 
@@ -179,12 +181,10 @@ struct data * encode(char *in_callsign, char *in_locator, uint8_t in_power) {
 
 	/* Merge with sync vector */
 	for (int i=0;i<WSPR_BIT_LENGTH;i++) {
-		wspr_msg.merged_vector[i] = sync_vector[i] + 2 * wspr_msg.convolution_encoded[i];
+		wspr_msg->merged_vector[i] =  wspr_msg->interleaving[i] * 2 + sync_vector[i];
 	}	
-	
-	print(&wspr_msg);
 			
-	return NULL;
+	return wspr_msg;
 }
 
 

@@ -4,6 +4,10 @@
 
 int main(void) {
 
-	encode("G4JNT", "RR99", 50);
+	struct data *wspr_msg = NULL;
+	wspr_msg = encode("AJ4VD", "EL89", 30);
+	print(wspr_msg);
+	free(wspr_msg);
+
 	return EXIT_SUCCESS;
 }
